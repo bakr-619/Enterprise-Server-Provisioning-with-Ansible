@@ -1,0 +1,75 @@
+---
+- name: Enterprise Server Provisioning
+  hosts: remote_server
+  become: yes
+  vars:
+    local_dir: "task/devops-bootcamp/week3/ansible"
+    remote_dir: "/task/devops-bootcamp/week3/ansible"
+    file_url: "https://raw.githubusercontent.com/torvalds/linux/master/README"
+    file_name: "readme.txt"
+    timestamp: "{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
+  tasks:
+    - name: Gather OS facts
+      ansible.builtin.setup:
+        gather_subset: [ 'distribution' ]
+
+    - name: Get local time on control node
+      ansible.builtin.command: date --iso-8601=seconds
+      delegate_to: localhost
+      register: local_time
+      changed_when: false
+
+    - name: Get remote time
+      ansible.builtin.command: date --iso-8601=seconds
+      register: remote_time
+      changed_when: false
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Enable Nginx on boot
+      ansible.builtin.service:
+        name: nginx
+        enabled: yes
+        state: started
+
+    - name: Create local directory
+      ansible.builtin.file:
+        path: "{{ local_dir }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Download file locally
+      ansible.builtin.get_url:
+        url: "{{ file_url }}"
+        dest: "{{ local_dir }}/{{ file_name }}"
+        mode: '0644'
+      delegate_to: localhost
+
+    - name: Create remote directory
+      ansible.builtin.file:
+        path: "{{ remote_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy file to remote server
+      ansible.builtin.copy:
+        src: "{{ local_dir }}/{{ file_name }}"
+        dest: "{{ remote_dir }}/{{ file_name }}"
+        mode: '0644'
+
+    - name: Check if file exists on remote server
+      ansible.builtin.stat:
+        path: "{{ remote_dir }}/{{ file_name }}"
+      register: file_stat
+
+    - name: Generate report
+      ansible.builtin.template:
+        src: report.j2
+        dest: "{{ local_dir }}/{{ timestamp }}_server_mgmt.txt"
+        mode: '0644'
+      delegate_to: localhost
