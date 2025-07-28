@@ -1,0 +1,6 @@
+all:
+  hosts:
+    remote_server:
+      ansible_host: <remote-server-ip>  # e.g., 192.168.64.2 or EC2 IP
+      ansible_user: <remote-user>      # e.g., ubuntu
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
