@@ -1,0 +1,8 @@
+Server Management Report
+Generated: {{ timestamp }}
+
+OS Version: {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}
+Local Time (Control Node): {{ local_time.stdout }}
+Remote Time (Server): {{ remote_time.stdout }}
+Downloaded File: {{ file_name }}
+File Exists on Remote Server: {{ 'Yes' if file_stat.stat.exists else 'No' }}
